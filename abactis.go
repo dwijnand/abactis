@@ -15,12 +15,14 @@ var logger    = log.New(logOutput, logPrefix, logFlags)
 
 func main() {
   logger.Println("Started.")
-  client, err := consul.NewClient(consul.DefaultConfig())
+
+  conf := consul.DefaultConfig()
+  client, err := consul.NewClient(conf)
   MaybeFatal(err)
   kv := client.KV()
 
-  oldKvPairs, meta, err := kv.List("", nil)
-  MaybePanic(err)
+  oldKvPairs, meta, err := kv.List("/", nil)
+  MaybeFatal(err)
   oldIndex := meta.LastIndex
   oldKvMap := makeKvMap(oldKvPairs)
 
