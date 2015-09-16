@@ -44,17 +44,9 @@ func main() {
     // Handle the updated result
 
     newKvMap := makeKvMap(newKvPairs)
-    allKeysMap := make(map[string]string, len(oldKvMap) + len(newKvPairs))
 
-    for k, v := range oldKvMap {
-      allKeysMap[k] = v
-    }
-
-    for _, kvPair := range newKvPairs {
-      allKeysMap[kvPair.Key] = string(kvPair.Value)
-    }
-
-    allKeys := stringStringMapKeys(allKeysMap)
+    allKvMap := makeKvMap(append(oldKvPairs, newKvPairs...))
+    allKeys := stringStringMapKeys(allKvMap)
 
     type ValDiff struct {
       Old, New string
