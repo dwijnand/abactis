@@ -54,10 +54,7 @@ func main() {
       allKeysMap[kvPair.Key] = string(kvPair.Value)
     }
 
-    allKeys := make([]string, len(allKeysMap))
-    for k, _ := range allKeysMap {
-      allKeys = append(allKeys, k)
-    }
+    allKeys := stringStringMapKeys(allKeysMap)
 
     type ValDiff struct {
       Old, New string
@@ -100,6 +97,14 @@ func makeKvMap(kvPairs consul.KVPairs) map[string]string {
     kvMap[kvPair.Key] = string(kvPair.Value)
   }
   return kvMap
+}
+
+func stringStringMapKeys(m map[string]string) []string {
+  keys := make([]string, len(m))
+  for k, _ := range m {
+    keys = append(keys, k)
+  }
+  return keys
 }
 
 func IsNilError(e error) bool {
