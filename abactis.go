@@ -6,6 +6,7 @@ import (
   "os"
   "reflect"
   consul "github.com/hashicorp/consul/api"
+  consulWatch "github.com/hashicorp/consul/watch"
 )
 
 var logFlags  = log.LstdFlags
@@ -17,36 +18,33 @@ func main() {
   logger.Println("Started.")
 
   conf := consul.DefaultConfig()
+
+  watchParams := make(map[string]interface{})
+  watchParams["type"] = "keyprefix"
+  watchParams["prefix"] = "/"
+
+  watch, err := consulWatch.Parse(watchParams)
+  MaybeFatal(err)
+
+  watch.Datacenter = conf.Datacenter
+  watch.Token      = conf.Token
+  watch.LogOutput  = logOutput
+  watch.Handler    = makeKvPairsHandler(conf)
+
+  MaybeFatal(watch.Run(conf.Address))
+}
+
+func makeKvPairsHandler(conf *consul.Config) consulWatch.HandlerFunc {
   client, err := consul.NewClient(conf)
   MaybeFatal(err)
   kv := client.KV()
 
-  oldKvPairs, meta, err := kv.List("/", nil)
+  oldKvPairs, _, err := kv.List("/", nil)
   MaybeFatal(err)
-  oldIndex := meta.LastIndex
   oldKvMap := makeKvMap(oldKvPairs)
 
-  for {
-    newKvPairs, meta, err := kv.List("", nil)
-
-    MaybePanic(err) // TODO: Don't panic in RL, probably log & exponential backoff
-
-    newIndex := meta.LastIndex
-
-    // If the index is unchanged do nothing
-    if (newIndex == oldIndex) {
-      continue
-    }
-
-    // Update the index, look for change
-    _oldIndex := oldIndex
-    oldIndex = newIndex
-    if _oldIndex != 0 && reflect.DeepEqual(oldKvPairs, newKvPairs) {
-      continue
-    }
-
-    // Handle the updated result
-
+  return func(index uint64, result interface{}) {
+    newKvPairs := result.(consul.KVPairs)
     newKvMap := makeKvMap(newKvPairs)
 
     allKvPairs := append(oldKvPairs, newKvPairs...)
