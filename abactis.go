@@ -48,11 +48,11 @@ func main() {
     allKvPairs := append(oldKvPairs, newKvPairs...)
     allKeys := stringStringMapKeys(makeKvMap(allKvPairs))
 
-    type ValDiff struct {
+    type StringDiff struct {
       Old, New string
     }
 
-    var modKeyPairs = make(map[string]ValDiff)
+    var modKeyPairs = make(map[string]StringDiff)
     var addKeyPairs = make(map[string]string)
     var remKeyPairs = make(map[string]string)
 
@@ -60,7 +60,7 @@ func main() {
       oldV, oldOk := oldKvMap[key]
       newV, newOk := newKvMap[key]
       if oldOk && newOk && oldV != newV {
-        modKeyPairs[key] = ValDiff{oldV, newV}
+        modKeyPairs[key] = StringDiff{oldV, newV}
       } else if oldOk && !newOk {
         remKeyPairs[key] = oldV
       } else if !oldOk && newOk {
