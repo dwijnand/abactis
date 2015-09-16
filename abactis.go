@@ -70,15 +70,11 @@ func main() {
     for _, key := range allKeys {
       oldV, oldOk := oldKvMap[key]
       newV, newOk := newKvMap[key]
-      // oldOk false  newOk false  => impossible
-      // oldOk false  newOk true   => added
-      // oldOk true   newOk false  => removed
-      // oldOk true   newOk true   => possibly modified
-      if oldOk && newOk && oldV != newV { // changed
+      if oldOk && newOk && oldV != newV {
         modKeyPairs[key] = ValDiff{oldV, newV}
-      } else if oldOk && !newOk { // removed
+      } else if oldOk && !newOk {
         remKeyPairs[key] = oldV
-      } else if !oldOk && newOk { // added
+      } else if !oldOk && newOk {
         addKeyPairs[key] = newV
       }
     }
