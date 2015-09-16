@@ -45,7 +45,8 @@ func main() {
 
     newKvMap := makeKvMap(newKvPairs)
 
-    allKvMap := makeKvMap(append(oldKvPairs, newKvPairs...))
+    allKvPairs := append(oldKvPairs, newKvPairs...)
+    allKvMap := makeKvMap(allKvPairs)
     allKeys := stringStringMapKeys(allKvMap)
 
     type ValDiff struct {
