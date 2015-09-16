@@ -8,8 +8,10 @@ import (
   consul "github.com/hashicorp/consul/api"
 )
 
-var logFlags = log.LstdFlags
-var logger   = log.New(os.Stderr, "", logFlags)
+var logFlags  = log.LstdFlags
+var logOutput = os.Stderr
+var logPrefix = ""
+var logger    = log.New(logOutput, logPrefix, logFlags)
 
 func main() {
   logger.Println("Started.")
