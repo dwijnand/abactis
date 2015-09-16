@@ -12,13 +12,15 @@ var logFlags = log.LstdFlags
 var logger   = log.New(os.Stderr, "", logFlags)
 
 func main() {
+  logger.Println("Started.")
   client, err := consul.NewClient(consul.DefaultConfig())
   MaybeFatal(err)
   kv := client.KV()
 
-  var oldIndex uint64 = 0
-  oldKvPairs := make(consul.KVPairs, 0)
-  oldKvMap := make(map[string]string)
+  oldKvPairs, meta, err := kv.List("", nil)
+  MaybePanic(err)
+  oldIndex := meta.LastIndex
+  oldKvMap := makeKvMap(oldKvPairs)
 
   for {
     newKvPairs, meta, err := kv.List("", nil)
@@ -41,7 +43,7 @@ func main() {
 
     // Handle the updated result
 
-    newKvMap := make(map[string]string, len(newKvPairs))
+    newKvMap := makeKvMap(newKvPairs)
     allKeysMap := make(map[string]string, len(oldKvMap) + len(newKvPairs))
 
     for k, v := range oldKvMap {
@@ -50,7 +52,6 @@ func main() {
 
     for _, kvPair := range newKvPairs {
       allKeysMap[kvPair.Key] = string(kvPair.Value)
-      newKvMap[kvPair.Key] = string(kvPair.Value)
     }
 
     allKeys := make([]string, len(allKeysMap))
@@ -82,28 +83,27 @@ func main() {
       }
     }
 
-    logger.Println("ADD KV pairs:")
     for k, v := range addKeyPairs {
-      logger.Printf("ADD %v : %v\n", k, v)
+      logger.Printf("ADD key = %v value = [%v]\n", k, v)
     }
-    logger.Println()
-
-    logger.Println("MOD KV pairs:")
     for k, v := range modKeyPairs {
-      logger.Printf("MOD %v : old: %v new: %v\n", k, v.Old, v.New)
+      logger.Printf("MOD key = %v old value = [%v] new value = [%v]\n", k, v.Old, v.New)
     }
-    logger.Println()
-
-    logger.Println("REM KV pairs:")
     for k, v := range remKeyPairs {
-      logger.Printf("REM %v : %v\n", k, v)
+      logger.Printf("REM key = %v old value = [%v]\n", k, v)
     }
-    logger.Println()
-    logger.Println()
 
     oldKvPairs = newKvPairs
     oldKvMap = newKvMap
   }
+}
+
+func makeKvMap(kvPairs consul.KVPairs) map[string]string {
+  kvMap := make(map[string]string, len(kvPairs))
+  for _, kvPair := range kvPairs {
+    kvMap[kvPair.Key] = string(kvPair.Value)
+  }
+  return kvMap
 }
 
 func IsNilError(e error) bool {
